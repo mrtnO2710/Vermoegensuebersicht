@@ -38,17 +38,19 @@ const SCHEMA = {
 
   budget: { titles: ['Neuer Posten', 'Posten bearbeiten'], required: 'title', sections: () => [
     ['Posten', null, [['title', 'text', 'Bezeichnung'], ['kind', 'select', 'Art', { income: 'Einnahme', expense: 'Ausgabe' }],
-      ['category', 'select', 'Kategorie', opts(META.budgetCats)]]],
-    ['Betrag', 'Vierteljährliche und jährliche Beträge werden auf den Monat umgerechnet.',
-      [['amount', 'money', 'Betrag'], ['interval', 'select', 'Rhythmus', opts(META.intervals)], ['active', 'bool', 'Aktiv']]], QN] },
+      ['nature', 'select', 'Kostenart', opts(META.natures)], ['category', 'select', 'Kategorie', opts(META.budgetCats)]]],
+    ['Betrag', 'Schwankt der Betrag, trage zusätzlich „Betrag bis“ ein – dann rechnet die Kostenübersicht mit einer Spanne. Vierteljährliche und jährliche Beträge werden auf den Monat umgerechnet.',
+      [['amount', 'money', 'Betrag (oder von)'], ['amountMax', 'money', 'Betrag bis (optional)'],
+        ['interval', 'select', 'Rhythmus', opts(META.intervals)], ['active', 'bool', 'Aktiv']]], QN] },
 
   goal: { titles: ['Neues Ziel', 'Ziel bearbeiten'], required: 'title', sections: () => [
     ['Ziel', null, [['title', 'text', 'Bezeichnung'], ['target', 'money', 'Zielbetrag'], ['date', 'date', 'Zieldatum'],
       ['scope', 'select', 'Bezug', META.scopes]]], ['Notiz', null, [['note', 'area', 'Notiz']]]] },
 
   profile: { titles: ['Profil & Regeln', 'Profil & Regeln'], sections: () => [
-    ['Person', 'Das Geburtsjahr wird für die Auswertung „Mit 40“ in der Prognose verwendet.',
-      [['name', 'text', 'Name'], ['birthYear', 'int', 'Geburtsjahr']]],
+    ['Person', '„Nur Kostenkontrolle“ blendet Anlagen und Immobilien aus. Das Geburtsjahr wird für die Auswertung „Mit 40“ in der Prognose verwendet.',
+      [['name', 'text', 'Name'], ['birthYear', 'int', 'Geburtsjahr'],
+        ['mode', 'select', 'Ansicht', { voll: 'Vollständig', kosten: 'Nur Kostenkontrolle' }]]],
     ['Annahmen', 'Die Rendite-Annahme gilt für Fortschreibung, Ziele und Prognose. Der Steuersatz ist eine Annahme für die Vermietungsrechnung.',
       [['expectedReturn', 'pct', 'Rendite-Annahme p. a.'], ['taxRate', 'pct', 'Grenzsteuersatz']]],
     ['Regeln', 'Tagesgeld-Minimum: Untergrenze der Liquiditätsreserve. Kontoausgleich: Zielstand des Girokontos am gewählten Tag – Überschuss aufs Tagesgeld, Fehlbetrag vom Tagesgeld.',
@@ -106,7 +108,8 @@ const Editors = {
         const est = App.find('estate', d.estate);
         Object.assign(obj, { estateId: d.estate, kind: 'mortgage', name: est ? `Darlehen ${est.name}` : '' });
       }
-      if (type === 'budget' && d.kind) Object.assign(obj, { kind: d.kind, category: d.kind === 'income' ? 'einkommen' : 'lebenshaltung' });
+      if (type === 'budget' && d.kind) Object.assign(obj, { kind: d.kind, nature: d.nature || 'fix',
+        category: d.kind === 'income' ? 'einkommen' : 'lebenshaltung' });
     }
     if (!obj) return;
     this.ctx = { type, id, obj, isNew, parent: d.parent || null, fields: sc.sections().flatMap((s) => s[2]) };

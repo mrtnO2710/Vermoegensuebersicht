@@ -106,13 +106,15 @@ V.loan = (id) => {
 /* ---------- Planung ---------- */
 V.planning = () => {
   const { st, s } = ctx();
-  const seg = `<div class="seg">${[['cashflow', 'Cashflow'], ['goals', 'Ziele'], ['forecast', 'Prognose']].map(([k, l]) => `<button class="${App.area === k ? 'on' : ''}" data-act="area" data-area="${k}">${l}</button>`).join('')}</div>`;
+  const seg = `<div class="seg">${[['cashflow', 'Cashflow'], ['costs', 'Kosten'], ['goals', 'Ziele'], ['forecast', 'Prognose']].map(([k, l]) => `<button class="${App.area === k ? 'on' : ''}" data-act="area" data-area="${k}">${l}</button>`).join('')}</div>`;
   let body;
   if (App.area === 'cashflow') {
     const cf = E.cashflow(st);
     body = `<div class="card">${H.hdr('Monatsbilanz')}<div class="metrics">${H.m('Einnahmen', F.euro(cf.incomeTotal, 0), 'pos')}${H.m('Ausgaben', F.euro(cf.expenseTotal, 0), 'neg')}${H.m('Saldo', F.signed(cf.balance), cf.balance >= 0 ? 'acc' : 'warn')}</div>
       <div style="margin-top:12px">${H.hint('Posten mit „auto“ stammen aus Anlagen, Immobilien und Krediten und ändern sich dort automatisch mit.', true)}</div></div>
       ${V.cfCard('Einnahmen', cf.inc, cf.incomeTotal, 'income')}${V.cfCard('Ausgaben', cf.exp, cf.expenseTotal, 'expense')}`;
+  } else if (App.area === 'costs') {
+    body = V.costsBody();
   } else if (App.area === 'goals') {
     body = st.goals.slice().sort((a, b) => a.date.localeCompare(b.date)).map((g) => V.goalCard(g, s, true)).join('') + H.add('Ziel hinzufügen', 'data-act="edit" data-type="goal"');
   } else {

@@ -13,9 +13,9 @@ const DEF = {
     landShare: 20, depRate: 2, depEnabled: true, manualDep: 0, manualInterest: 0, rent: 0, costs: 0, question: '', note: '' },
   loan: { name: '', lender: '', kind: 'consumer', estateId: null, balance: 0, balanceDate: null, rate: 0, payment: 0, special: 0,
     fixedUntil: null, original: 0, question: '', note: '' },
-  budget: { title: '', kind: 'expense', category: 'lebenshaltung', amount: 0, interval: 'monthly', active: true, question: '', note: '' },
+  budget: { title: '', kind: 'expense', category: 'lebenshaltung', nature: 'fix', amount: 0, amountMax: 0, interval: 'monthly', active: true, question: '', note: '' },
   goal: { title: '', target: 0, date: null, scope: 'investments', note: '' },
-  profile: { name: '', birthYear: 1985, expectedReturn: 5, taxRate: 30, reserveMinimum: 10000, giroTarget: 3000, giroDay: 1 },
+  profile: { name: '', birthYear: 1985, expectedReturn: 5, taxRate: 30, reserveMinimum: 10000, giroTarget: 3000, giroDay: 1, mode: 'voll' },
 };
 const COLL = { asset: 'assets', estate: 'estates', loan: 'loans', budget: 'budget', goal: 'goals' };
 
@@ -122,15 +122,19 @@ const H = {
 };
 
 /* ---------- Navigation & Aktionen ---------- */
-const TABS = [['overview', 'Übersicht', 'grid'], ['assets', 'Anlagen', 'chart'], ['estates', 'Immobilien', 'building'], ['planning', 'Planung', 'target'], ['more', 'Mehr', 'dots']];
+const TABS_FULL = [['overview', 'Übersicht', 'grid'], ['assets', 'Anlagen', 'chart'], ['estates', 'Immobilien', 'building'], ['planning', 'Planung', 'target'], ['more', 'Mehr', 'dots']];
+const TABS_COST = [['costoverview', 'Übersicht', 'grid'], ['costs', 'Kosten', 'cart'], ['planning', 'Planung', 'target'], ['more', 'Mehr', 'dots']];
+const tabsFor = () => (App.st && App.st.profile.mode === 'kosten' ? TABS_COST : TABS_FULL);
 
 App.render = () => {
   const view = document.getElementById('view'), tabs = document.getElementById('tabs');
   if (!App.st) { view.innerHTML = V.welcome(); tabs.innerHTML = ''; return; }
+  const list = tabsFor();
+  if (!list.some(([k]) => k === App.tab)) App.tab = list[0][0];
   const top = App.stack[App.stack.length - 1];
   try { view.innerHTML = top ? V[top.view](top.id) : V[App.tab](); }
   catch (e) { console.error(e); App.stack = []; view.innerHTML = `<div class="card">Anzeigefehler: ${F.esc(e.message)}</div>`; }
-  tabs.innerHTML = TABS.map(([k, label, ic]) => `<button class="${App.tab === k ? 'on' : ''}" data-act="tab" data-tab="${k}">${icon(ic)}${label}</button>`).join('');
+  tabs.innerHTML = list.map(([k, label, ic]) => `<button class="${App.tab === k ? 'on' : ''}" data-act="tab" data-tab="${k}">${icon(ic)}${label}</button>`).join('');
 };
 
 App.actions = {
@@ -147,6 +151,7 @@ App.actions = {
   export: () => App.exportData(),
   import: () => document.getElementById('importFile').click(),
   'start-empty': () => { App.st = App.empty(); App.save(); App.render(); },
+  'start-costs': () => { App.st = App.empty(); App.st.profile.mode = 'kosten'; App.tab = 'costoverview'; App.save(); App.render(); },
   wipe: () => {
     if (!confirm('Alle Daten auf diesem Gerät löschen? Vorher eine Sicherung exportieren!')) return;
     localStorage.removeItem(KEY); App.st = null; App.stack = []; App.tab = 'overview'; App.render();
@@ -195,7 +200,8 @@ V.welcome = () => `
     <p>Dein Vermögen im Überblick – Anlagen, Immobilien, Kredite, Cashflow und Ziele.<br>
     Alle Daten bleiben ausschließlich auf diesem Gerät.</p>
     <button class="btn" data-act="import">Startdaten importieren</button>
-    <button class="btn ghost" data-act="start-empty">Leer beginnen</button>
+    <button class="btn ghost" data-act="start-empty">Leer beginnen – alle Bereiche</button>
+    <button class="btn ghost" data-act="start-costs">Nur Kostenkontrolle</button>
     ${App.isStandalone() ? '' : `<div class="card" style="text-align:left">${H.hint('Wichtig: Tippe in Safari auf „Teilen“ → „Zum Home-Bildschirm“. Nur dann bleiben die Daten dauerhaft auf dem iPhone gespeichert.', true)}</div>`}
   </div>`;
 

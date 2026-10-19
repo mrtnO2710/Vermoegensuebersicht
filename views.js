@@ -5,7 +5,7 @@ const CAT_ICON = { einkommen: 'brief', lebenshaltung: 'cart', absicherung: 'shie
 
 V.overview = () => {
   const { st, s, p } = ctx();
-  const cf = E.cashflow(st), pts = E.openPoints(st);
+  const cf = E.cashflow(st), pts = E.openPoints(st), cost = E.costSummary(st);
   const goals = st.goals.slice().sort((a, b) => a.date.localeCompare(b.date));
   const goal = goals.find((g) => E.scopeValue(s, g.scope) < g.target) || goals[0];
   const slices = Object.entries(META.classes).map(([k, [l, c]]) => ({ title: l, color: c, value: s.sumCls(k) })).filter((x) => x.value > 0);
@@ -36,6 +36,7 @@ V.overview = () => {
       <div class="metrics">${H.m('Einnahmen', F.euro(cf.incomeTotal, 0), 'pos')}${H.m('Ausgaben', F.euro(cf.expenseTotal, 0), 'neg')}${H.m('Saldo', F.signed(cf.balance), cf.balance >= 0 ? 'acc' : 'warn')}</div>
       ${H.bar(cf.incomeTotal > 0 ? cf.expenseTotal / cf.incomeTotal : 1, cf.balance >= 0 ? '' : 'warn')}
       ${cf.exp.slice(0, 4).map((l) => H.kv(l.title, F.euro(l.amount, 0), { hint: l.sub })).join('')}
+      ${cost.total.max > 0 ? H.kv('Fixkosten / variabel', `${F.range(cost.fix.min, cost.fix.max)} · ${F.range(cost.vari.min, cost.vari.max)}`, { hint: 'Details unter Planung → Kosten' }) : ''}
       ${missingRent ? `<div style="margin-top:10px">${H.hint('Mieteinnahmen der Immobilien sind noch nicht erfasst – der Saldo ist deshalb vorläufig.', true)}</div>` : ''}
     </div>
     ${st.estates.length ? `<div class="card">${H.hdr('Immobilien', `${st.estates.length} Objekte`)}

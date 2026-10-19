@@ -15,6 +15,7 @@ const META = {
   },
   intervals: { monthly: ['Monatlich', 1], quarterly: ['Vierteljährlich', 1 / 3], yearly: ['Jährlich', 1 / 12] },
   scopes: { investments: 'Kapitalanlagen', funds: 'Fondsdepots', netWorth: 'Nettovermögen' },
+  natures: { fix: ['Fixkosten', '#00A5E1'], var: ['Variable Kosten', '#FF8A5B'], spar: ['Sparen & Vermögensaufbau', '#3DDC97'] },
 };
 
 E.descriptor = (e) => {
@@ -30,7 +31,8 @@ E.cashflow = (st) => {
     const [intLabel, f] = META.intervals[b.interval] || META.intervals.monthly;
     (b.kind === 'income' ? inc : exp).push({
       title: b.title, sub: b.interval === 'monthly' ? cat : `${cat} · ${intLabel.toLowerCase()} umgelegt`,
-      amount: b.amount * f, color, auto: false, ref: { type: 'budget', id: b.id }, flag: !!b.question || b.amount === 0,
+      amount: (b.kind === 'expense' && b.amountMax > b.amount ? b.amountMax : b.amount) * f, color, auto: false,
+      ref: { type: 'budget', id: b.id }, flag: !!b.question || b.amount === 0,
     });
   });
   st.estates.filter((e) => e.rent > 0).forEach((e) =>
@@ -97,6 +99,11 @@ const F = {
     return s + F.euro(a, 0);
   },
   pct: (v, dec = 2) => F.num(v, dec) + ' %',
+  /* Spanne: „400–500 €“, sonst ein einzelner Betrag */
+  range: (min, max, dec = null) => {
+    const d = dec != null ? dec : (Math.abs(min % 1) < 0.004 && Math.abs(max % 1) < 0.004 ? 0 : 2);
+    return max > min + 0.004 ? `${F.num(min, d)}–${F.euro(max, d)}` : F.euro(min, d);
+  },
   rate: (v) => F.pct(v, Math.round(v) === v ? 0 : 1),
   date: (d) => (d ? new Date(typeof d === 'string' ? d + 'T00:00:00' : d).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '—'),
   monthYear: (d) => new Date(d).toLocaleDateString('de-DE', { month: 'short', year: 'numeric' }),
@@ -110,4 +117,25 @@ const F = {
   },
   editable: (v) => (v ? String(Math.round(v * 1000) / 1000).replace('.', ',') : ''),
   esc: (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])),
+};
+
+/* ---------- Kostenkontrolle ---------- */
+E.natureOf = (b) => (META.natures[b.nature] ? b.nature : 'fix');
+E.budgetRange = (b) => {
+  const f = (META.intervals[b.interval] || META.intervals.monthly)[1];
+  const min = b.amount * f, max = (b.amountMax > b.amount ? b.amountMax : b.amount) * f;
+  return { min, max, isRange: max > min + 0.004 };
+};
+E.costSummary = (st) => {
+  const groups = { fix: [], var: [], spar: [] };
+  st.budget.filter((b) => b.active && b.kind === 'expense').forEach((b) => groups[E.natureOf(b)].push(b));
+  const sum = (list) => list.reduce((a, b) => {
+    const r = E.budgetRange(b); return { min: a.min + r.min, max: a.max + r.max };
+  }, { min: 0, max: 0 });
+  const fix = sum(groups.fix), vari = sum(groups.var), spar = sum(groups.spar);
+  const spend = { min: fix.min + vari.min, max: fix.max + vari.max };
+  const total = { min: spend.min + spar.min, max: spend.max + spar.max };
+  const income = E.cashflow(st).incomeTotal;
+  return { groups, fix, vari, spar, spend, total, income,
+    left: { min: income - total.max, max: income - total.min } };
 };
