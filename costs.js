@@ -114,10 +114,27 @@ V.costoverview = () => {
       ${H.kv('− Kosten inklusive Sparen', F.range(c.total.min * 12, c.total.max * 12, 0))}
       ${H.kv('Bleibt übrig', F.range(rest.min * 12, rest.max * 12, 0), { cls: restColor, em: true })}</div>` : ''}
 
+    ${V.costAssetsCard()}
+
     ${pts.length ? `<div class="card">${H.hdr('Offene Punkte', 'Diese Angaben fehlen noch', String(pts.length))}
       ${pts.slice(0, 3).map(V.pointRow).join('')}
       ${pts.length > 3 ? `<button class="linkbtn" data-act="open" data-view="points">Alle ${pts.length} offenen Punkte anzeigen ›</button>` : ''}</div>` : ''}
 
     <div class="foot">Bei schwankenden Beträgen zeigt die App eine Spanne. Alle Werte bleiben nur auf diesem Gerät.</div>
   </div>`;
+};
+
+/* Anlagen auf der Kosten-Startseite: nur anzeigen, wenn welche erfasst sind. */
+V.costAssetsCard = () => {
+  const st = App.st, s = E.summary(st), aktiv = st.assets.filter((a) => a.active);
+  if (!aktiv.length) {
+    return `<div class="card">${H.hdr('Anlagen', 'Depots, Sparpläne, Rücklagen')}
+      ${H.hint('Hier kannst du auch Anlagen führen, etwa ein ETF-Depot oder Tagesgeld – mit Wert, Sparrate und Verlauf.', true)}
+      <button class="btn ghost" style="margin-top:12px" data-act="edit" data-type="asset">Anlage hinzufügen</button></div>`;
+  }
+  const top = aktiv.slice().sort((a, b) => E.assetNow(b, s.rate) - E.assetNow(a, s.rate)).slice(0, 3);
+  return `<div class="card tight">${H.hdr('Anlagen', `${aktiv.length} ${aktiv.length === 1 ? 'Anlage' : 'Anlagen'}`, F.euro(s.investments, 0))}
+    ${top.map((a) => V.assetRow(a, s.rate)).join('')}
+    ${s.contributions > 0 ? H.kv('Sparraten gesamt', F.euro(s.contributions, 0) + ' mtl.', { cls: 'pos' }) : ''}
+    <button class="add" data-act="tab" data-tab="assets">Alle Anlagen ansehen</button></div>`;
 };

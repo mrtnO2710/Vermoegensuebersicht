@@ -1,6 +1,6 @@
 /* Offline-Betrieb: Programmdateien werden auf dem Gerät zwischengespeichert.
    Persönliche Daten laufen nie über diesen Service Worker – sie liegen im lokalen Speicher. */
-const CACHE = 'vermoegen-v3';
+const CACHE = 'vermoegen-v4';
 const FILES = ['./', 'index.html', 'styles.css', 'engine.js', 'engine2.js', 'ui.js', 'views.js', 'views2.js', 'costs.js',
   'editors.js', 'manifest.webmanifest', 'icons/icon-180.png', 'icons/icon-192.png', 'icons/icon-512.png'];
 self.addEventListener('install', (e) => { e.waitUntil(caches.open(CACHE).then((c) => c.addAll(FILES))); self.skipWaiting(); });

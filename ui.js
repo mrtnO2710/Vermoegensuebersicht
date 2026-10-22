@@ -123,7 +123,8 @@ const H = {
 
 /* ---------- Navigation & Aktionen ---------- */
 const TABS_FULL = [['overview', 'Übersicht', 'grid'], ['assets', 'Anlagen', 'chart'], ['estates', 'Immobilien', 'building'], ['planning', 'Planung', 'target'], ['more', 'Mehr', 'dots']];
-const TABS_COST = [['costoverview', 'Übersicht', 'grid'], ['costs', 'Kosten', 'cart'], ['planning', 'Planung', 'target'], ['more', 'Mehr', 'dots']];
+const TABS_COST = [['costoverview', 'Übersicht', 'grid'], ['assets', 'Anlagen', 'chart'], ['costs', 'Kosten', 'cart'],
+  ['planning', 'Planung', 'target'], ['more', 'Mehr', 'dots']];
 const tabsFor = () => (App.st && App.st.profile.mode === 'kosten' ? TABS_COST : TABS_FULL);
 
 App.render = () => {
