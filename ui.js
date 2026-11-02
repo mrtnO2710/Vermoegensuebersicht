@@ -2,6 +2,8 @@
 /* Grundgerüst: lokaler Speicher, Navigation, Bausteine, Diagramme, Import/Export.
    Alle Daten liegen ausschließlich im Speicher dieses Geräts (localStorage). */
 const KEY = 'vermoegen.v1';
+/* Eigene Daten werden hier geparkt, solange die Demo läuft. */
+const DEMOBAK = 'vermoegen.v1.vorDemo';
 const V = {};
 const App = { st: null, tab: 'overview', stack: [], area: 'cashflow', fc: { monthly: null, years: 15 } };
 const uid = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
@@ -19,9 +21,10 @@ const DEF = {
 };
 const COLL = { asset: 'assets', estate: 'estates', loan: 'loans', budget: 'budget', goal: 'goals' };
 
-App.empty = () => ({ version: 1, profile: { ...DEF.profile }, assets: [], estates: [], loans: [], budget: [], goals: [] });
+App.empty = () => ({ version: 1, demo: false, profile: { ...DEF.profile }, assets: [], estates: [], loans: [], budget: [], goals: [] });
 App.normalize = (d) => {
   const st = App.empty();
+  st.demo = d.demo === true;
   st.profile = { ...DEF.profile, ...(d.profile || {}) };
   for (const [type, coll] of Object.entries(COLL)) {
     st[coll] = (Array.isArray(d[coll]) ? d[coll] : []).map((x) => ({ ...DEF[type], ...x, id: x.id || uid() }));
@@ -36,6 +39,7 @@ App.save = () => {
   if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
 };
 App.find = (type, id) => (App.st[COLL[type]] || []).find((x) => x.id === id);
+App.isDemo = () => !!(App.st && App.st.demo);
 App.isStandalone = () => window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches;
 App.toast = (msg) => {
   const t = document.createElement('div'); t.className = 'toast'; t.textContent = msg;
@@ -135,6 +139,7 @@ App.render = () => {
   const top = App.stack[App.stack.length - 1];
   try { view.innerHTML = top ? V[top.view](top.id) : V[App.tab](); }
   catch (e) { console.error(e); App.stack = []; view.innerHTML = `<div class="card">Anzeigefehler: ${F.esc(e.message)}</div>`; }
+  if (App.isDemo()) view.insertAdjacentHTML('afterbegin', V.demobar());
   tabs.innerHTML = list.map(([k, label, ic]) => `<button class="${App.tab === k ? 'on' : ''}" data-act="tab" data-tab="${k}">${icon(ic)}${label}</button>`).join('');
 };
 
@@ -153,6 +158,33 @@ App.actions = {
   import: () => document.getElementById('importFile').click(),
   'start-empty': () => { App.st = App.empty(); App.save(); App.render(); },
   'start-costs': () => { App.st = App.empty(); App.st.profile.mode = 'kosten'; App.tab = 'costoverview'; App.save(); App.render(); },
+  /* Beispielprofil laden – eigene Daten werden vorher gesichert und bei „Demo beenden" zurückgeholt. */
+  'demo-load': (d) => {
+    const quelle = DEMO[d.mode === 'kosten' ? 'kosten' : 'voll'];
+    if (!quelle) return;
+    if (App.st && !App.st.demo) {
+      if (!confirm('Beispieldaten anzeigen? Deine eigenen Daten werden gesichert und kommen mit „Demo beenden" zurück.')) return;
+      try { localStorage.setItem(DEMOBAK, JSON.stringify(App.st)); } catch (e) { App.toast('Sicherung fehlgeschlagen – Demo nicht geladen'); return; }
+    }
+    App.st = App.normalize(JSON.parse(JSON.stringify(quelle)));
+    App.st.demo = true; App.stack = [];
+    App.tab = App.st.profile.mode === 'kosten' ? 'costoverview' : 'overview';
+    App.save(); App.render(); window.scrollTo(0, 0); App.toast('Beispieldaten geladen');
+  },
+  'demo-end': () => {
+    if (!confirm('Demo beenden? Alle Demo-Eintragungen werden gelöscht.')) return;
+    let gesichert = null;
+    try { gesichert = localStorage.getItem(DEMOBAK); } catch (e) { gesichert = null; }
+    App.st = null;
+    if (gesichert) {
+      try { App.st = App.normalize(JSON.parse(gesichert)); App.st.demo = false; } catch (e) { App.st = null; }
+    }
+    try { localStorage.removeItem(DEMOBAK); } catch (e) {}
+    if (App.st) App.save(); else localStorage.removeItem(KEY);
+    App.stack = []; App.tab = App.st && App.st.profile.mode === 'kosten' ? 'costoverview' : 'overview';
+    App.render(); window.scrollTo(0, 0);
+    App.toast(App.st ? 'Eigene Daten wiederhergestellt' : 'Demo gelöscht');
+  },
   wipe: () => {
     if (!confirm('Alle Daten auf diesem Gerät löschen? Vorher eine Sicherung exportieren!')) return;
     localStorage.removeItem(KEY); App.st = null; App.stack = []; App.tab = 'overview'; App.render();
@@ -194,6 +226,12 @@ App.importText = (text) => {
   App.toast('Daten importiert');
 };
 
+V.demobar = () => `
+  <div class="demobar">
+    <div><b>Beispieldaten (Demo)</b><div>Erfundene Zahlen zum Ausprobieren. Änderungen hier betreffen keine echten Daten.</div></div>
+    <button data-act="demo-end">Demo beenden</button>
+  </div>`;
+
 V.welcome = () => `
   <div class="welcome stack">
     <div>${H.brand('#96DCFA')}</div>
@@ -203,6 +241,10 @@ V.welcome = () => `
     <button class="btn" data-act="import">Startdaten importieren</button>
     <button class="btn ghost" data-act="start-empty">Leer beginnen – alle Bereiche</button>
     <button class="btn ghost" data-act="start-costs">Nur Kostenkontrolle</button>
+    <div class="sep" style="margin:6px 0"></div>
+    <p style="font-size:13px;margin:0">Nur anschauen? Die Demo zeigt die App mit erfundenen Beispieldaten.</p>
+    <button class="btn ghost" data-act="demo-load" data-mode="voll">Demo ansehen – alle Bereiche</button>
+    <button class="btn ghost" data-act="demo-load" data-mode="kosten">Demo ansehen – nur Kosten</button>
     ${App.isStandalone() ? '' : `<div class="card" style="text-align:left">${H.hint('Wichtig: Tippe in Safari auf „Teilen“ → „Zum Home-Bildschirm“. Nur dann bleiben die Daten dauerhaft auf dem iPhone gespeichert.', true)}</div>`}
   </div>`;
 

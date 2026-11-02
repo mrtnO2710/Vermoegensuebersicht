@@ -181,6 +181,13 @@ V.more = () => {
         <button class="btn ghost" data-act="import">Sicherung / Startdaten importieren</button>
         <button class="danger" data-act="wipe">Alle Daten auf diesem Gerät löschen</button></div>
       <div class="help">Exportiere regelmäßig eine Sicherung, z. B. in „Dateien“ oder per AirDrop. Werden die Safari-Websitedaten gelöscht oder geht das iPhone verloren, lässt sich damit alles wiederherstellen.</div></div>
+    <div class="card">${H.hdr('Beispieldaten', App.isDemo() ? 'Die Demo läuft gerade' : 'App vorführen, ohne eigene Zahlen')}
+      ${App.isDemo()
+        ? `<div class="stack" style="gap:10px"><button class="btn" data-act="demo-end">Demo beenden</button></div>
+           <div class="help">Beim Beenden werden die Demo-Eintragungen gelöscht. Waren vorher eigene Daten auf dem Gerät, kommen sie automatisch zurück.</div>`
+        : `<div class="stack" style="gap:10px"><button class="btn ghost" data-act="demo-load" data-mode="voll">Demo – alle Bereiche</button>
+           <button class="btn ghost" data-act="demo-load" data-mode="kosten">Demo – nur Kostenkontrolle</button></div>
+           <div class="help">Lädt ein erfundenes Beispielprofil zum Vorführen. Eigene Daten werden vorher gesichert und mit „Demo beenden“ wiederhergestellt.</div>`}</div>
     <div class="card">${H.brand('#96DCFA')}<div style="font-size:17px;font-weight:600;margin-top:8px">Vermögen</div>
       <div class="t2" style="font-size:12.5px;line-height:1.45;margin-top:6px">Die App speichert nichts im Internet. Alle Eingaben bleiben auf diesem Gerät. Sie ersetzt keine Anlage- oder Steuerberatung.</div>
       <div class="t3" style="font-size:11.5px;margin-top:6px">Version 1.0 (Web)</div></div>

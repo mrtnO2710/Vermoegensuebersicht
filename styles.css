@@ -90,4 +90,8 @@ svg.chart text{fill:var(--t3);font-size:10px;font-family:inherit}
 .gridt>*:nth-child(4n+1){text-align:left;color:var(--t2)}
 input[type=range]{width:100%;accent-color:var(--accent)}
 .welcome{text-align:center;padding-top:40px} .welcome p{color:var(--t2);line-height:1.5}
+.demobar{display:flex;gap:12px;align-items:center;background:rgba(255,181,71,.13);border:1px solid rgba(255,181,71,.4);border-radius:16px;padding:12px 14px;margin:6px 0 14px}
+.demobar b{display:block;font-size:13.5px;color:var(--warn)}
+.demobar div div{font-size:11.5px;color:var(--t2);line-height:1.35;margin-top:2px}
+.demobar button{flex:none;background:var(--warn);color:#05101B;border:0;border-radius:11px;padding:9px 12px;font:inherit;font-weight:700;font-size:12.5px;cursor:pointer}
 .toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom) + 96px);transform:translateX(-50%);background:var(--raised);border:1px solid var(--sep);padding:10px 16px;border-radius:14px;font-size:14px;z-index:20}
