@@ -8,9 +8,9 @@ const SCHEMA = {
   asset: { titles: ['Neue Anlage', 'Anlage bearbeiten'], required: 'name', sections: () => [
     ['Allgemein', null, [['name', 'text', 'Bezeichnung'], ['cls', 'select', 'Kategorie', opts(META.classes)],
       ['provider', 'text', 'Anbieter (optional)'], ['reference', 'text', 'Depot- / Vertragsnummer (optional)']]],
-    ['Stand', 'Ändern sich Wert oder Stichtag, legt die App automatisch einen Verlaufspunkt an.',
+    ['Stand', 'Alle Werte lassen sich hier von Hand eintragen oder ändern – auch die Rendite p. a. (z. B. 8,63 aus dem Depotbericht). Ändern sich Wert oder Stichtag, legt die App automatisch einen Verlaufspunkt an.',
       [['value', 'money', 'Wert'], ['valueDate', 'date', 'Stichtag'], ['invested', 'money', 'Eingezahlt (netto)'],
-        ['monthly', 'money', 'Sparrate / Beitrag mtl.'], ['returnPA', 'pct', 'Rendite p. a. (Bericht)']]],
+        ['monthly', 'money', 'Sparrate / Beitrag mtl.'], ['returnPA', 'pct', 'Rendite p. a.']]],
     ['Automatische Fortschreibung', 'Rechnet den Wert ab dem Stichtag mit Sparrate und Rendite-Annahme bis heute hoch. 0 % = Standardannahme unter „Mehr“.',
       [['autoProject', 'bool', 'Wert fortschreiben'], ['projectionRate', 'pct', 'Rendite-Annahme']]],
     QN, ['Status', null, [['active', 'bool', 'Aktiv – zählt zum Vermögen']]]] },

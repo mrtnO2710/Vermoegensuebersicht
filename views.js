@@ -91,7 +91,14 @@ V.assets = () => {
   return `<div class="stack">
     <div class="topbar"><h1>Anlagen</h1><button class="iconbtn" data-act="edit" data-type="asset" aria-label="Anlage hinzufügen">+</button></div>
     <div class="card">${H.hdr('Kapitalanlagen gesamt', null, F.euro(s.investments, 0))}
-      <div class="metrics">${H.m('Eingezahlt', F.compact(inv), '', `${known.length} Anlagen bekannt`)}${H.m('Gewinn', F.signed(gain), gain >= 0 ? 'pos' : 'neg', inv > 0 ? F.pct(gain / inv * 100, 1) : '')}${H.m('Sparraten', F.euro(s.contributions, 0), '', 'pro Monat')}</div></div>
+      <div class="metrics">${H.m('Eingezahlt', F.compact(inv), '', `${known.length} Anlagen bekannt`)}${H.m('Gewinn', F.signed(gain), gain >= 0 ? 'pos' : 'neg', inv > 0 ? F.pct(gain / inv * 100, 1) : '')}${H.m('Sparraten', F.euro(s.contributions, 0), '', 'pro Monat')}</div>
+      ${(() => {
+        const ar = E.avgReturn(st);
+        if (!ar) return H.hint('Trage bei einer Anlage die Rendite p. a. ein, dann zeigt die App hier den Durchschnitt.', true);
+        const hinweis = `gewichtet nach Wert · ${ar.count} von ${ar.total} Anlagen`
+          + (ar.coverage < 0.995 ? ` · ${F.pct(ar.coverage * 100, 0)} des Werts` : '');
+        return H.kv('Ø Rendite p. a.', F.pct(ar.avg), { cls: 'acc', em: true, hint: hinweis });
+      })()}</div>
     ${groups.map(([[label, color, ic], items]) => {
       const sorted = items.slice().sort((a, b) => (b.active - a.active) || (b.value - a.value));
       const total = items.reduce((x, a) => x + E.assetNow(a, s.rate), 0);
@@ -127,11 +134,13 @@ V.asset = (id) => {
       <div class="v" style="font-size:32px;font-weight:700;margin:12px 0 6px">${F.euro(cur)}</div>
       ${E.assetEstimated(a) ? H.hint(`Schätzung für heute. Letzter bekannter Stand: ${F.euro(a.value)} am ${F.date(a.valueDate)}.`, true)
         : `<div class="t3" style="font-size:12px">Stand ${F.date(a.valueDate)}${a.reference ? ' · Nr. ' + F.esc(a.reference) : ''}</div>`}</div>
-    <div class="card"><div class="metrics two" style="row-gap:16px">
+    <div class="card" data-act="edit" data-type="asset" data-id="${a.id}" style="cursor:pointer"><div class="metrics two" style="row-gap:16px">
       ${H.m('Eingezahlt', a.invested > 0 ? F.euro(a.invested, 0) : '—')}
       ${H.m('Gewinn', g != null ? F.signed(g) : '—', g != null && g < 0 ? 'neg' : 'pos', g != null ? F.pct(g / a.invested * 100, 1) : '')}
-      ${H.m('Rendite p. a.', a.returnPA ? F.pct(a.returnPA) : '—', '', a.returnPA ? 'laut Bericht' : '')}
-      ${H.m('Sparrate', a.monthly > 0 ? F.euro(a.monthly, 0) + ' mtl.' : '—')}</div></div>
+      ${H.m('Rendite p. a.', a.returnPA ? F.pct(a.returnPA) : '—', '', 'antippen zum Ändern')}
+      ${H.m('Sparrate', a.monthly > 0 ? F.euro(a.monthly, 0) + ' mtl.' : '—')}</div>
+      <div class="sep"></div>
+      ${H.hint('Alle Werte hier – auch Rendite, Wert, Stichtag und Sparrate – lassen sich von Hand eintragen. Tippe die Karte oder oben „Bearbeiten“ an.', true)}</div>
     <div class="card">${H.hdr('Verlauf', `${snaps.length} Stichtage`)}
       ${snaps.length >= 2 ? H.line([{ color: '#00A5E1', points: snaps.map((x) => ({ x: E.d(x.date), y: x.value })) }], { area: true, dots: true }) : ''}
       ${rev.map((x, i) => {

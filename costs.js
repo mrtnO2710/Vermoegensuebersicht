@@ -136,5 +136,6 @@ V.costAssetsCard = () => {
   return `<div class="card tight">${H.hdr('Anlagen', `${aktiv.length} ${aktiv.length === 1 ? 'Anlage' : 'Anlagen'}`, F.euro(s.investments, 0))}
     ${top.map((a) => V.assetRow(a, s.rate)).join('')}
     ${s.contributions > 0 ? H.kv('Sparraten gesamt', F.euro(s.contributions, 0) + ' mtl.', { cls: 'pos' }) : ''}
+    ${(() => { const ar = E.avgReturn(st); return ar ? H.kv('Ø Rendite p. a.', F.pct(ar.avg), { cls: 'acc' }) : ''; })()}
     <button class="add" data-act="tab" data-tab="assets">Alle Anlagen ansehen</button></div>`;
 };

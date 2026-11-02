@@ -139,3 +139,20 @@ E.costSummary = (st) => {
   return { groups, fix, vari, spar, spend, total, income,
     left: { min: income - total.max, max: income - total.min } };
 };
+
+/* Durchschnittliche Rendite p. a. der Kapitalanlagen, gewichtet nach aktuellem Wert.
+   Berücksichtigt nur Anlagen mit eingetragener Rendite; `coverage` sagt, wie viel des
+   Gesamtwerts davon abgedeckt ist. */
+E.avgReturn = (st) => {
+  const rate = st.profile.expectedReturn;
+  const aktiv = st.assets.filter((a) => a.active);
+  const mitRendite = aktiv.filter((a) => a.returnPA);
+  const gewicht = mitRendite.reduce((x, a) => x + E.assetNow(a, rate), 0);
+  if (!gewicht) return null;
+  const gesamt = aktiv.reduce((x, a) => x + E.assetNow(a, rate), 0);
+  return {
+    avg: mitRendite.reduce((x, a) => x + a.returnPA * E.assetNow(a, rate), 0) / gewicht,
+    count: mitRendite.length, total: aktiv.length,
+    coverage: gesamt > 0 ? gewicht / gesamt : 0,
+  };
+};
